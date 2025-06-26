@@ -22,28 +22,33 @@ A FastAPI-based server providing API endpoints for extracting and processing You
 ### Using Python
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/chinpeerapat/youtube-api-server.git
    cd youtube-api-server
    ```
 
 2. Create a virtual environment:
+
    ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
 3. Install dependencies:
+
    ```bash
    pip install -r requirements.txt
    ```
 
 4. Create a `.env` file from the example:
+
    ```bash
    cp .env.example .env
    ```
 
 5. Run the server:
+
    ```bash
    python -m app.main
    ```
@@ -51,12 +56,14 @@ A FastAPI-based server providing API endpoints for extracting and processing You
 ### Using Docker
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/chinpeerapat/youtube-api-server.git
    cd youtube-api-server
    ```
 
 2. Build and start the Docker container:
+
    ```bash
    docker-compose up -d
    ```
@@ -65,18 +72,19 @@ A FastAPI-based server providing API endpoints for extracting and processing You
 
 Once the server is running, you can access:
 
-- API documentation: http://localhost:8000/docs
-- Alternative API documentation: http://localhost:8000/redoc
+- API documentation: <http://localhost:8000/docs>
+- Alternative API documentation: <http://localhost:8000/redoc>
 
 ### API Endpoints
 
 #### 1. Get Video Metadata
 
-```
+```md
 POST /youtube/video-data
 ```
 
 Request body:
+
 ```json
 {
   "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
@@ -84,6 +92,7 @@ Request body:
 ```
 
 Response:
+
 ```json
 {
   "title": "Video Title",
@@ -101,11 +110,12 @@ Response:
 
 #### 2. Get Video Captions
 
-```
+```md
 POST /youtube/video-captions
 ```
 
 Request body:
+
 ```json
 {
   "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
@@ -114,17 +124,19 @@ Request body:
 ```
 
 Response:
-```
+
+```md
 "Text of the captions..."
 ```
 
 #### 3. Get Video Timestamps
 
-```
+```md
 POST /youtube/video-timestamps
 ```
 
 Request body:
+
 ```json
 {
   "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
@@ -133,6 +145,7 @@ Request body:
 ```
 
 Response:
+
 ```json
 [
   "0:00 - Caption at the beginning",
@@ -143,7 +156,7 @@ Response:
 
 ## Project Structure
 
-```
+```md
 youtube-api-server/
 ├── app/
 │   ├── __init__.py
