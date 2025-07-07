@@ -1,16 +1,25 @@
 from typing import Optional, List
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class YouTubeRequest(BaseModel):
+    """Request body for YouTube-related endpoints.
+
+    * **video** – Either a full YouTube URL *or* the plain 11-character video ID.
+    * **languages** – Optional list of language codes (e.g. ``["en"]``). Defaults to
+      English when omitted.
     """
-    Model for YouTube API requests.
-    
-    Attributes:
-        url: YouTube video URL
-        languages: Optional list of language codes for captions
-    """
-    url: str
-    languages: Optional[List[str]] = None
+
+    video: str = Field(..., description="YouTube video URL or ID", examples=["https://www.youtube.com/watch?v=dQw4w9WgXcQ", "dQw4w9WgXcQ"])
+    languages: Optional[List[str]] = Field(None, description="Preferred caption languages (ISO 639-1 codes)")
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "video": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                "languages": ["en"]
+            }
+        }
+    }
 
 class VideoData(BaseModel):
     """

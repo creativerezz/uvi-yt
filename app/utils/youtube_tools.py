@@ -4,17 +4,33 @@ from urllib.request import urlopen
 from typing import Optional, List
 
 from fastapi import HTTPException
-from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api import YouTubeTranscriptApi  # type: ignore
 
 class YouTubeTools:
     @staticmethod
-    def get_youtube_video_id(url: str) -> Optional[str]:
-        """Function to get the video ID from a YouTube URL."""
-        parsed_url = urlparse(url)
+    def get_youtube_video_id(url_or_id: str) -> Optional[str]:
+        """Extract a YouTube video ID from either a full URL *or* a raw video ID.
+
+        This helper now supports three input formats so that the API is more
+        forgiving when used from the interactive docs:
+
+        1. Full YouTube watch URLs – e.g. ``https://www.youtube.com/watch?v=dQw4w9WgXcQ``
+        2. Shortened URLs – e.g. ``https://youtu.be/dQw4w9WgXcQ``
+        3. A plain 11-character video ID – e.g. ``dQw4w9WgXcQ``
+        """
+
+        # First, handle the case where the user passed the plain 11-character ID.
+        allowed_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-"
+        if len(url_or_id) == 11 and all(ch in allowed_chars for ch in url_or_id):
+            return url_or_id
+
+        # Otherwise, attempt to parse as a URL.
+        parsed_url = urlparse(url_or_id)
         hostname = parsed_url.hostname
 
         if hostname == "youtu.be":
-            return parsed_url.path[1:]
+            return parsed_url.path.lstrip("/") or None
+
         if hostname in ("www.youtube.com", "youtube.com"):
             if parsed_url.path == "/watch":
                 query_params = parse_qs(parsed_url.query)
@@ -23,6 +39,7 @@ class YouTubeTools:
                 return parsed_url.path.split("/")[2]
             if parsed_url.path.startswith("/v/"):
                 return parsed_url.path.split("/")[2]
+
         return None
 
     @staticmethod
@@ -64,25 +81,22 @@ class YouTubeTools:
             raise HTTPException(status_code=500, detail=f"Error getting video data: {str(e)}")
 
     @staticmethod
-    def get_video_captions(url: str, languages: Optional[List[str]] = None) -> str:
-        """Get captions from a YouTube video."""
-        if not url:
-            raise HTTPException(status_code=400, detail="No URL provided")
+    def get_video_captions(url_or_id: str, languages: Optional[List[str]] = None) -> str:
+        """Return plain-text captions for the requested YouTube video.
+
+        If *languages* is omitted, English (``["en"]``) will be used by default.
+        """
+
+        if not url_or_id:
+            raise HTTPException(status_code=400, detail="No URL or ID provided")
+
+        video_id = YouTubeTools.get_youtube_video_id(url_or_id)
+        if not video_id:
+            raise HTTPException(status_code=400, detail="Invalid YouTube URL/ID")
 
         try:
-            video_id = YouTubeTools.get_youtube_video_id(url)
-            if not video_id:
-                raise HTTPException(status_code=400, detail="Invalid YouTube URL")
-        except Exception:
-            raise HTTPException(status_code=400, detail="Error getting video ID from URL")
+            captions = YouTubeTranscriptApi.get_transcript(video_id, languages=languages or ["en"])
 
-        try:
-            captions = None
-            if languages:
-                captions = YouTubeTranscriptApi.get_transcript(video_id, languages=languages)
-            else:
-                captions = YouTubeTranscriptApi.get_transcript(video_id)
-            
             if captions:
                 return " ".join(line["text"] for line in captions)
             return "No captions found for video"
@@ -90,21 +104,24 @@ class YouTubeTools:
             raise HTTPException(status_code=500, detail=f"Error getting captions for video: {str(e)}")
 
     @staticmethod
-    def get_video_timestamps(url: str, languages: Optional[List[str]] = None) -> List[str]:
-        """Generate timestamps for a YouTube video based on captions."""
-        if not url:
-            raise HTTPException(status_code=400, detail="No URL provided")
+    def get_video_timestamps(url_or_id: str, languages: Optional[List[str]] = None) -> List[str]:
+        """Return caption lines prefixed with the *start* timestamp.
 
-        try:
-            video_id = YouTubeTools.get_youtube_video_id(url)
-            if not video_id:
-                raise HTTPException(status_code=400, detail="Invalid YouTube URL")
-        except Exception:
-            raise HTTPException(status_code=400, detail="Error getting video ID from URL")
+        The function now mirrors :py:meth:`get_video_captions` and accepts either
+        a full URL **or** a raw 11-character video ID.  If *languages* is
+        omitted we default to English (``["en"]``).
+        """
+
+        if not url_or_id:
+            raise HTTPException(status_code=400, detail="No URL or ID provided")
+
+        video_id = YouTubeTools.get_youtube_video_id(url_or_id)
+        if not video_id:
+            raise HTTPException(status_code=400, detail="Invalid YouTube URL/ID")
 
         try:
             captions = YouTubeTranscriptApi.get_transcript(video_id, languages=languages or ["en"])
-            timestamps = []
+            timestamps: List[str] = []
             for line in captions:
                 start = int(line["start"])
                 minutes, seconds = divmod(start, 60)

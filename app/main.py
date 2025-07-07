@@ -14,11 +14,26 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Initialize FastAPI app
+# Enrich Swagger-UI with nicer defaults
+swagger_ui_parameters = {
+    "docExpansion": "none",  # collapse routes by default
+    "defaultModelsExpandDepth": -1,  # hide schemas section unless expanded
+}
+
+# Custom API metadata (will be visible in /docs)
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    description="API for extracting and processing YouTube video data",
+    description="Easily fetch YouTube metadata, captions and timestamps. Paste **any** video URL or 11-character ID – no extra JSON required!",
     version="1.0.0",
+    contact={
+        "name": "YouTube Tools API",
+        "url": "https://github.com/chinpeerapat/youtube-api-server",
+    },
+    license_info={
+        "name": "MIT",
+        "url": "https://opensource.org/licenses/MIT",
+    },
+    swagger_ui_parameters=swagger_ui_parameters,
 )
 
 # Add CORS middleware
