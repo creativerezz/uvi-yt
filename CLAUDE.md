@@ -46,11 +46,86 @@ This is a **FastAPI-based YouTube API server** that extracts video metadata, cap
 
 The server runs on `localhost:8000` by default:
 
-- **POST /youtube/video-data**: Extract video metadata using YouTube oEmbed API
-- **POST /youtube/video-captions**: Get video transcripts/captions via youtube-transcript-api
-- **POST /youtube/video-timestamps**: Generate timestamped captions
+- **GET /youtube/metadata**: Extract video metadata using YouTube oEmbed API
+- **GET /youtube/captions**: Get video transcripts/captions via youtube-transcript-api
+- **GET /youtube/timestamps**: Generate timestamped captions
 - **GET /health**: Health check endpoint
 - **GET /docs**: Swagger/OpenAPI documentation
+
+## Quick Testing Commands
+
+### Local Development (localhost:8000)
+```bash
+# Health check
+curl "http://localhost:8000/health"
+# Returns: {"status":"healthy"}
+
+# Video metadata
+curl "http://localhost:8000/youtube/metadata?video=dQw4w9WgXcQ"
+# Returns: {"title":"Rick Astley - Never Gonna Give You Up...","author_name":"Rick Astley",...}
+
+# Plain text captions
+curl "http://localhost:8000/youtube/captions?video=dQw4w9WgXcQ"
+# Returns: "[♪♪♪] ♪ We're no strangers to love ♪ ♪ You know the rules and so do I ♪..."
+
+# Timestamped captions
+curl "http://localhost:8000/youtube/timestamps?video=dQw4w9WgXcQ"
+# Returns: ["0:01 - [♪♪♪]","0:18 - ♪ We're no strangers to love ♪",...]
+
+# With full YouTube URL
+curl "http://localhost:8000/youtube/captions?video=https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+```
+
+### Production (Railway Deployment)
+```bash
+# Health check
+curl "https://uvi-yt-production.up.railway.app/health"
+
+# Video metadata
+curl "https://uvi-yt-production.up.railway.app/youtube/metadata?video=dQw4w9WgXcQ"
+
+# Captions with language preference
+curl "https://uvi-yt-production.up.railway.app/youtube/captions?video=dQw4w9WgXcQ&languages=en"
+
+# Test with problematic video (proxy bypass)
+curl "https://uvi-yt-production.up.railway.app/youtube/captions?video=4v4PJoxm8Bc"
+```
+
+### Expected Response Formats
+**Metadata Response:**
+```json
+{
+  "title": "Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster)",
+  "author_name": "Rick Astley",
+  "author_url": "https://www.youtube.com/@RickAstleyYT",
+  "type": "video",
+  "height": 113,
+  "width": 200,
+  "thumbnail_url": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg"
+}
+```
+
+**Captions Response:**
+```
+"[♪♪♪] ♪ We're no strangers to love ♪ ♪ You know the rules and so do I ♪ ♪ A full commitment's what I'm thinking of ♪..."
+```
+
+**Timestamps Response:**
+```json
+[
+  "0:01 - [♪♪♪]",
+  "0:18 - ♪ We're no strangers to love ♪",
+  "0:22 - ♪ You know the rules\nand so do I ♪",
+  "0:27 - ♪ A full commitment's\nwhat I'm thinking of ♪"
+]
+```
+
+**Error Response:**
+```json
+{
+  "detail": "Error getting captions for video: Could not retrieve a transcript..."
+}
+```
 
 ## Technology Stack
 
@@ -90,6 +165,18 @@ HOST="0.0.0.0"
 LOG_LEVEL="INFO"
 PORT="8000"
 PROJECT_NAME="YouTube API Server"
+```
+
+**Proxy Configuration (for bypassing YouTube IP blocks):**
+```
+# Generic HTTP proxy
+PROXY_TYPE=generic
+PROXY_URL=http://username:password@proxy-server:port/
+
+# OR Webshare rotating proxies (recommended)
+PROXY_TYPE=webshare
+WEBSHARE_USERNAME=your_username
+WEBSHARE_PASSWORD=your_password
 ```
 
 **Development .env file:**
@@ -138,3 +225,37 @@ The `extract_video_id` method handles multiple YouTube URL formats:
 - Supports multiple language preferences for captions
 - Falls back to auto-generated captions if manual ones unavailable
 - Generates formatted timestamps with duration and text content
+
+## Troubleshooting
+
+### Common Issues
+
+**1. "Could not retrieve a transcript" Error**
+- **Cause**: YouTube is blocking requests from your IP (common with cloud providers)
+- **Solution**: Configure proxy settings in environment variables
+- **Test**: Try with a known working video like `dQw4w9WgXcQ` first
+
+**2. "407 Proxy Authentication Required"**
+- **Cause**: Proxy credentials are incorrect or improperly formatted
+- **Solution**: Verify proxy URL format: `http://username:password@host:port`
+- **Check**: Contact proxy provider for correct authentication method
+
+**3. Metadata works but captions fail**
+- **Cause**: Metadata uses official YouTube oEmbed API, captions use unofficial methods
+- **Solution**: This is expected - proxy is only needed for caption/transcript endpoints
+- **Note**: Some videos may not have captions available
+
+**4. Server won't start on Railway**
+- **Cause**: Missing required environment variables
+- **Solution**: Ensure all required env vars are set in Railway dashboard
+- **Check**: Railway logs for specific error messages
+
+### Testing Proxy Configuration
+```bash
+# Test without proxy (should fail for some videos)
+curl "https://uvi-yt-production.up.railway.app/youtube/captions?video=4v4PJoxm8Bc"
+
+# Test after adding proxy config (should succeed)
+# Add PROXY_TYPE=generic and PROXY_URL in Railway dashboard, then redeploy
+curl "https://uvi-yt-production.up.railway.app/youtube/captions?video=4v4PJoxm8Bc"
+```
