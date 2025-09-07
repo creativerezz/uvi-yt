@@ -5,8 +5,36 @@ from typing import Optional, List
 
 from fastapi import HTTPException
 from youtube_transcript_api import YouTubeTranscriptApi  # type: ignore
+from youtube_transcript_api.proxies import GenericProxyConfig, WebshareProxyConfig
+from app.core.config import settings
 
 class YouTubeTools:
+    @staticmethod
+    def _get_youtube_api() -> YouTubeTranscriptApi:
+        """Create YouTubeTranscriptApi instance with proxy configuration if available."""
+        proxy_config = None
+        
+        if settings.PROXY_TYPE == "generic" and settings.PROXY_URL:
+            # Use the provided proxy URL for both HTTP and HTTPS
+            proxy_config = GenericProxyConfig(
+                http_url=settings.PROXY_URL,
+                https_url=settings.PROXY_URL
+            )
+        elif settings.PROXY_TYPE == "generic" and (settings.PROXY_HTTP or settings.PROXY_HTTPS):
+            # Use separate HTTP/HTTPS proxies if provided
+            proxy_config = GenericProxyConfig(
+                http_url=settings.PROXY_HTTP or settings.PROXY_HTTPS,
+                https_url=settings.PROXY_HTTPS or settings.PROXY_HTTP
+            )
+        elif settings.PROXY_TYPE == "webshare" and settings.WEBSHARE_USERNAME and settings.WEBSHARE_PASSWORD:
+            # Use Webshare rotating proxies
+            proxy_config = WebshareProxyConfig(
+                username=settings.WEBSHARE_USERNAME,
+                password=settings.WEBSHARE_PASSWORD
+            )
+        
+        return YouTubeTranscriptApi(proxy_config=proxy_config)
+
     @staticmethod
     def get_youtube_video_id(url_or_id: str) -> Optional[str]:
         """Extract a YouTube video ID from either a full URL *or* a raw video ID.
@@ -95,7 +123,7 @@ class YouTubeTools:
             raise HTTPException(status_code=400, detail="Invalid YouTube URL/ID")
 
         try:
-            api = YouTubeTranscriptApi()
+            api = YouTubeTools._get_youtube_api()
             transcript = api.fetch(video_id, languages=languages or ["en"])
             
             if transcript:
@@ -121,7 +149,7 @@ class YouTubeTools:
             raise HTTPException(status_code=400, detail="Invalid YouTube URL/ID")
 
         try:
-            api = YouTubeTranscriptApi()
+            api = YouTubeTools._get_youtube_api()
             transcript = api.fetch(video_id, languages=languages or ["en"])
             timestamps: List[str] = []
             for snippet in transcript:

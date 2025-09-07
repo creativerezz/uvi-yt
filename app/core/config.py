@@ -23,6 +23,14 @@ class Settings:
     
     # Logging
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+    
+    # Proxy settings for YouTube API (to work around IP blocking)
+    PROXY_TYPE: str = os.getenv("PROXY_TYPE", "")  # "generic" or "webshare"
+    PROXY_URL: str = os.getenv("PROXY_URL", "")  # For generic proxies
+    PROXY_HTTP: str = os.getenv("PROXY_HTTP", "")
+    PROXY_HTTPS: str = os.getenv("PROXY_HTTPS", "") 
+    WEBSHARE_USERNAME: str = os.getenv("WEBSHARE_USERNAME", "")
+    WEBSHARE_PASSWORD: str = os.getenv("WEBSHARE_PASSWORD", "")
 
 # Create settings instance
 settings = Settings()
