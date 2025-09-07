@@ -61,6 +61,7 @@ The server runs on `localhost:8000` by default:
 - **Configuration**: python-dotenv for environment management
 - **Testing**: pytest with asyncio support
 - **Containerization**: Docker and Docker Compose
+- **Deployment**: Railway (with Nixpacks builder)
 
 ## Development Workflow
 
@@ -72,10 +73,45 @@ The server runs on `localhost:8000` by default:
 5. Start development server: `python -m app.main`
 
 ### Configuration
-Environment variables are defined in `.env` file:
+Environment variables are defined in `.env` file for development or via deployment platform (Railway, etc.):
+
+**Required Environment Variables:**
 - `HOST`: Server host (default: 0.0.0.0)
-- `PORT`: Server port (default: 8000)
+- `PORT`: Server port (default: 8000) - automatically set by Railway
 - `LOG_LEVEL`: Logging level (default: INFO)
+- `PROJECT_NAME`: API title shown in documentation (default: "YouTube Tools API")
+- `BACKEND_CORS_ORIGINS`: Allowed CORS origins (use "*" for development, specific domains for production)
+
+**Example for Railway Deployment:**
+```
+BACKEND_CORS_ORIGINS="*"
+DEBUG="false"  
+HOST="0.0.0.0"
+LOG_LEVEL="INFO"
+PORT="8000"
+PROJECT_NAME="YouTube API Server"
+```
+
+**Development .env file:**
+```
+HOST=0.0.0.0
+PORT=8000
+LOG_LEVEL=INFO
+PROJECT_NAME=YouTube Tools API
+BACKEND_CORS_ORIGINS=*
+```
+
+### Railway Deployment
+1. **Connect Repository**: Link your GitHub repository to Railway
+2. **Set Environment Variables**: Add the required environment variables in Railway dashboard:
+   - `BACKEND_CORS_ORIGINS="*"`
+   - `DEBUG="false"`
+   - `HOST="0.0.0.0"`
+   - `LOG_LEVEL="INFO"`
+   - `PROJECT_NAME="YouTube API Server"`
+   - Railway automatically sets `PORT`
+3. **Deploy**: Railway uses `railway.json` configuration with `python -m app.main` as start command
+4. **Access**: Your API will be available at the Railway-provided domain
 
 ### Code Organization Patterns
 - **Static methods**: YouTubeTools uses static methods for stateless operations
