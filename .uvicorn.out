@@ -1,0 +1,13 @@
+2025-09-20 16:20:32,521 - __main__ - INFO - Starting server on 0.0.0.0:8000
+INFO:     Will watch for changes in these directories: ['/Users/reza/Projects/apis/uvi-yt']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [50539] using StatReload
+INFO:     Started server process [50542]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:62281 - "GET /health HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [50542]
+INFO:     Stopping reloader process [50539]

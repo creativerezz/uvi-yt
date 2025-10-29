@@ -47,7 +47,15 @@ A FastAPI-based server providing API endpoints for extracting and processing You
    cp .env.example .env
    ```
 
-5. Run the server:
+5. (Optional) Configure proxy settings in `.env` for bypassing YouTube restrictions:
+
+   ```env
+   PROXY_TYPE=webshare
+   WEBSHARE_USERNAME=your-username
+   WEBSHARE_PASSWORD=your-password
+   ```
+
+6. Run the server:
 
    ```bash
    python -m app.main
@@ -152,6 +160,32 @@ Response:
   "0:05 - Next caption",
   "0:10 - Another caption"
 ]
+```
+
+## Proxy Configuration
+
+The server supports proxy configuration to bypass YouTube API restrictions. Two proxy types are supported:
+
+### Webshare Proxy (Recommended)
+
+Webshare provides rotating residential proxies that work well with YouTube's API:
+
+```env
+PROXY_TYPE=webshare
+WEBSHARE_USERNAME=your-username
+WEBSHARE_PASSWORD=your-password
+```
+
+### Generic Proxy
+
+For other proxy providers, use the generic proxy configuration:
+
+```env
+PROXY_TYPE=generic
+PROXY_URL=http://proxy.example.com:8080
+# Or specify separate HTTP/HTTPS proxies:
+PROXY_HTTP=http://proxy.example.com:8080
+PROXY_HTTPS=https://proxy.example.com:8443
 ```
 
 ## Project Structure

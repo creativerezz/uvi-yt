@@ -29,8 +29,8 @@ class YouTubeTools:
         elif settings.PROXY_TYPE == "webshare" and settings.WEBSHARE_USERNAME and settings.WEBSHARE_PASSWORD:
             # Use Webshare rotating proxies
             proxy_config = WebshareProxyConfig(
-                username=settings.WEBSHARE_USERNAME,
-                password=settings.WEBSHARE_PASSWORD
+                proxy_username=settings.WEBSHARE_USERNAME,
+                proxy_password=settings.WEBSHARE_PASSWORD
             )
         
         return YouTubeTranscriptApi(proxy_config=proxy_config)
