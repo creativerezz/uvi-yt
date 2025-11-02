@@ -19,7 +19,12 @@ class Settings:
     PORT: int = int(os.getenv("PORT", "8000"))
     
     # CORS settings - add specific origins in production
-    BACKEND_CORS_ORIGINS: list = ["*"]
+    # Parse comma-separated origins from environment variable
+    BACKEND_CORS_ORIGINS: list = (
+        [origin.strip() for origin in os.getenv("BACKEND_CORS_ORIGINS", "*").split(",")]
+        if os.getenv("BACKEND_CORS_ORIGINS")
+        else ["*"]
+    )
     
     # Logging
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")

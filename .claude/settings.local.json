@@ -22,5 +22,12 @@
     "additionalDirectories": [
       "/Users/reza/Projects/youtube-temp-main"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "shadcn",
+    "nuxt-ui",
+    "Better Auth",
+    "supabase"
+  ],
+  "enableAllProjectMcpServers": true
 }
