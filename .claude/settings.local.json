@@ -15,7 +15,8 @@
       "Bash(npm install)",
       "Bash(npm install:*)",
       "Bash(vercel:*)",
-      "Bash(/bashes)"
+      "Bash(/bashes)",
+      "Bash(railway variables:*)"
     ],
     "deny": [],
     "ask": [],
@@ -23,11 +24,11 @@
       "/Users/reza/Projects/youtube-temp-main"
     ]
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "shadcn",
     "nuxt-ui",
     "Better Auth",
     "supabase"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }
