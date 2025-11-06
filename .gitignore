@@ -129,3 +129,4 @@ dmypy.json
 # Docker
 .docker/
 .claude/settings.local.json
+.claude/settings.local.json

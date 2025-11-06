@@ -16,7 +16,8 @@
       "Bash(npm install:*)",
       "Bash(vercel:*)",
       "Bash(/bashes)",
-      "Bash(railway variables:*)"
+      "Bash(railway variables:*)",
+      "Bash(git remote add:*)"
     ],
     "deny": [],
     "ask": [],
