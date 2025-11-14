@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.routes.youtube import router as youtube_router
+from app.routes.service import router as service_router
 
 # Configure logging
 logging.basicConfig(
@@ -47,14 +48,19 @@ app.add_middleware(
 
 # Include routers
 app.include_router(youtube_router)
+app.include_router(service_router)
 
 @app.get("/", tags=["root"])
 async def root():
     """Root endpoint that provides API information"""
     return {
         "message": f"Welcome to the {settings.PROJECT_NAME}",
+        "version": "1.1.0",
         "docs": "/docs",
-        "redoc": "/redoc"
+        "redoc": "/redoc",
+        "service": "/service/info",
+        "status": "/service/status",
+        "health": "/health"
     }
 
 @app.get("/health", tags=["health"])

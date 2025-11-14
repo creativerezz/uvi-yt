@@ -7,7 +7,9 @@ A FastAPI-based server providing API endpoints for extracting and processing You
 - Extract video metadata using YouTube's oEmbed API
 - Retrieve video captions/transcripts
 - Generate timestamped captions
+- **Transcript caching** with configurable TTL and LRU eviction
 - RESTful API with Swagger/OpenAPI documentation
+- Service status page and monitoring endpoints
 - Docker support for easy deployment
 
 ## Requirements
@@ -82,6 +84,8 @@ Once the server is running, you can access:
 
 - API documentation: <http://localhost:8000/docs>
 - Alternative API documentation: <http://localhost:8000/redoc>
+- Service information page: <http://localhost:8000/service/info>
+- Service status (JSON): <http://localhost:8000/service/status>
 
 ### API Endpoints
 
@@ -209,6 +213,14 @@ youtube-api-server/
 ├── Dockerfile                 # Docker configuration
 └── docker-compose.yml         # Docker Compose configuration
 ```
+
+## Service Status
+
+Visit `/service/info` for a beautiful HTML service information page, or `/service/status` for JSON status data.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a detailed list of changes and version history.
 
 ## Contributing
 
