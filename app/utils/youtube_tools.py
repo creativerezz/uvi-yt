@@ -5,10 +5,9 @@ from typing import Optional, List
 
 from fastapi import HTTPException
 from youtube_transcript_api import YouTubeTranscriptApi  # type: ignore
-from youtube_transcript_api._types import Transcript  # type: ignore
 from youtube_transcript_api.proxies import GenericProxyConfig, WebshareProxyConfig
 from app.core.config import settings
-from app.utils.transcript_cache import get_cache
+from app.utils.transcript_cache import get_cache, Transcript
 
 class YouTubeTools:
     @staticmethod

@@ -5,11 +5,17 @@ Provides in-memory caching with TTL (time-to-live) support to reduce
 API calls and improve response times.
 """
 import time
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, TypedDict
 from collections import OrderedDict
 
-from youtube_transcript_api._types import Transcript  # type: ignore
 from app.core.config import settings
+
+
+class Transcript(TypedDict):
+    """Type definition for YouTube transcript snippet."""
+    text: str
+    start: float
+    duration: float
 
 
 class TranscriptCache:
