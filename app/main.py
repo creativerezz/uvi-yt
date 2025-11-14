@@ -28,7 +28,7 @@ app = FastAPI(
     version="1.0.0",
     contact={
         "name": "YouTube Tools API",
-        "url": "https://github.com/chinpeerapat/youtube-api-server",
+        "url": "https://github.com/creativerezz",
     },
     license_info={
         "name": "MIT",
