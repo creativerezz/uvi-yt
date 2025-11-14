@@ -5,8 +5,10 @@ from typing import Optional, List
 
 from fastapi import HTTPException
 from youtube_transcript_api import YouTubeTranscriptApi  # type: ignore
+from youtube_transcript_api._types import Transcript  # type: ignore
 from youtube_transcript_api.proxies import GenericProxyConfig, WebshareProxyConfig
 from app.core.config import settings
+from app.utils.transcript_cache import get_cache
 
 class YouTubeTools:
     @staticmethod
@@ -34,6 +36,44 @@ class YouTubeTools:
             )
         
         return YouTubeTranscriptApi(proxy_config=proxy_config)
+
+    @staticmethod
+    def _fetch_transcript(video_id: str, languages: Optional[List[str]] = None) -> List[Transcript]:
+        """
+        Fetch transcript for a video, using cache if available.
+        
+        This is a shared method used by both get_video_captions and get_video_timestamps
+        to avoid duplicate API calls and benefit from caching.
+        
+        Args:
+            video_id: YouTube video ID
+            languages: List of language codes (e.g., ["en", "es"])
+            
+        Returns:
+            List of transcript snippets
+            
+        Raises:
+            HTTPException: If transcript cannot be fetched
+        """
+        cache = get_cache()
+        normalized_languages = languages or ["en"]
+        
+        # Try to get from cache first
+        cached_transcript = cache.get(video_id, normalized_languages)
+        if cached_transcript is not None:
+            return cached_transcript
+        
+        # Cache miss - fetch from API
+        try:
+            api = YouTubeTools._get_youtube_api()
+            transcript = api.fetch(video_id, languages=normalized_languages)
+            
+            # Store in cache
+            cache.set(video_id, transcript, normalized_languages)
+            
+            return transcript
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error getting captions for video: {str(e)}")
 
     @staticmethod
     def get_youtube_video_id(url_or_id: str) -> Optional[str]:
@@ -122,15 +162,11 @@ class YouTubeTools:
         if not video_id:
             raise HTTPException(status_code=400, detail="Invalid YouTube URL/ID")
 
-        try:
-            api = YouTubeTools._get_youtube_api()
-            transcript = api.fetch(video_id, languages=languages or ["en"])
-            
-            if transcript:
-                return " ".join(snippet.text for snippet in transcript)
-            return "No captions found for video"
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error getting captions for video: {str(e)}")
+        transcript = YouTubeTools._fetch_transcript(video_id, languages)
+        
+        if transcript:
+            return " ".join(snippet.text for snippet in transcript)
+        return "No captions found for video"
 
     @staticmethod
     def get_video_timestamps(url_or_id: str, languages: Optional[List[str]] = None) -> List[str]:
@@ -148,14 +184,11 @@ class YouTubeTools:
         if not video_id:
             raise HTTPException(status_code=400, detail="Invalid YouTube URL/ID")
 
-        try:
-            api = YouTubeTools._get_youtube_api()
-            transcript = api.fetch(video_id, languages=languages or ["en"])
-            timestamps: List[str] = []
-            for snippet in transcript:
-                start = int(snippet.start)
-                minutes, seconds = divmod(start, 60)
-                timestamps.append(f"{minutes}:{seconds:02d} - {snippet.text}")
-            return timestamps
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error generating timestamps: {str(e)}")
+        transcript = YouTubeTools._fetch_transcript(video_id, languages)
+        
+        timestamps: List[str] = []
+        for snippet in transcript:
+            start = int(snippet.start)
+            minutes, seconds = divmod(start, 60)
+            timestamps.append(f"{minutes}:{seconds:02d} - {snippet.text}")
+        return timestamps

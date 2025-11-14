@@ -36,6 +36,11 @@ class Settings:
     PROXY_HTTPS: str = os.getenv("PROXY_HTTPS", "") 
     WEBSHARE_USERNAME: str = os.getenv("WEBSHARE_USERNAME", "")
     WEBSHARE_PASSWORD: str = os.getenv("WEBSHARE_PASSWORD", "")
+    
+    # Cache settings for transcripts
+    CACHE_ENABLED: bool = os.getenv("CACHE_ENABLED", "true").lower() == "true"
+    CACHE_TTL_SECONDS: int = int(os.getenv("CACHE_TTL_SECONDS", "3600"))  # Default: 1 hour
+    CACHE_MAX_SIZE: int = int(os.getenv("CACHE_MAX_SIZE", "1000"))  # Maximum number of cached transcripts
 
 # Create settings instance
 settings = Settings()

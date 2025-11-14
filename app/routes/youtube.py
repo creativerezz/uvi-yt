@@ -3,6 +3,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Query
 
 from app.utils.youtube_tools import YouTubeTools
+from app.utils.transcript_cache import get_cache
 
 router = APIRouter(
     prefix="/youtube",
@@ -54,3 +55,29 @@ async def get_video_timestamps(
     """Return caption text with starting timestamps (English by default)."""
 
     return YouTubeTools.get_video_timestamps(video, languages)
+
+@router.get(
+    "/cache/stats",
+    summary="Get cache statistics",
+    response_description="Current cache statistics including size and configuration.",
+)
+async def get_cache_stats():
+    """Return cache statistics and configuration."""
+    cache = get_cache()
+    return {
+        "enabled": cache.enabled,
+        "size": cache.size(),
+        "max_size": cache.max_size,
+        "ttl_seconds": cache.ttl_seconds,
+    }
+
+@router.delete(
+    "/cache/clear",
+    summary="Clear transcript cache",
+    response_description="Clears all cached transcripts.",
+)
+async def clear_cache():
+    """Clear all cached transcripts."""
+    cache = get_cache()
+    cache.clear()
+    return {"message": "Cache cleared successfully", "size": cache.size()}
