@@ -1,14 +1,17 @@
 """
 Service status and information endpoints.
 """
+import logging
 from datetime import datetime
 from typing import Dict, Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
 
 from app.core.config import settings
 from app.utils.transcript_cache import get_cache
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/service",
@@ -25,41 +28,48 @@ async def service_status() -> Dict[str, Any]:
     Returns:
         Dictionary containing service status, version, configuration, and cache stats
     """
-    cache = get_cache()
-    
-    return {
-        "status": "operational",
-        "version": "1.1.0",
-        "timestamp": datetime.utcnow().isoformat() + "Z",
-        "service": {
-            "name": settings.PROJECT_NAME,
-            "host": settings.HOST,
-            "port": settings.PORT,
-            "log_level": settings.LOG_LEVEL,
-        },
-        "features": {
-            "proxy_enabled": bool(settings.PROXY_TYPE),
-            "proxy_type": settings.PROXY_TYPE or "none",
-            "cache_enabled": cache.enabled,
-            "cache_size": cache.size(),
-            "cache_max_size": cache.max_size,
-            "cache_ttl_seconds": cache.ttl_seconds,
-        },
-        "endpoints": {
-            "metadata": "/youtube/metadata",
-            "captions": "/youtube/captions",
-            "timestamps": "/youtube/timestamps",
-            "cache_stats": "/youtube/cache/stats",
-            "cache_clear": "/youtube/cache/clear",
-            "health": "/health",
-            "docs": "/docs",
-            "redoc": "/redoc",
-        },
-        "cors": {
-            "enabled": True,
-            "allowed_origins": settings.BACKEND_CORS_ORIGINS,
-        },
-    }
+    try:
+        cache = get_cache()
+        
+        return {
+            "status": "operational",
+            "version": "1.1.0",
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "service": {
+                "name": settings.PROJECT_NAME,
+                "host": settings.HOST,
+                "port": settings.PORT,
+                "log_level": settings.LOG_LEVEL,
+            },
+            "features": {
+                "proxy_enabled": bool(settings.PROXY_TYPE),
+                "proxy_type": settings.PROXY_TYPE or "none",
+                "cache_enabled": cache.enabled,
+                "cache_size": cache.size(),
+                "cache_max_size": cache.max_size,
+                "cache_ttl_seconds": cache.ttl_seconds,
+            },
+            "endpoints": {
+                "metadata": "/youtube/metadata",
+                "captions": "/youtube/captions",
+                "timestamps": "/youtube/timestamps",
+                "cache_stats": "/youtube/cache/stats",
+                "cache_clear": "/youtube/cache/clear",
+                "health": "/health",
+                "docs": "/docs",
+                "redoc": "/redoc",
+            },
+            "cors": {
+                "enabled": True,
+                "allowed_origins": settings.BACKEND_CORS_ORIGINS,
+            },
+        }
+    except Exception as e:
+        logger.error(f"Unexpected error in service_status: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve service status: {str(e)}"
+        )
 
 
 @router.get("/info", summary="Service information page", response_class=HTMLResponse)
@@ -70,8 +80,22 @@ async def service_info() -> str:
     Returns:
         HTML page with service information, status, and links
     """
-    cache = get_cache()
-    status_data = await service_status()
+    try:
+        cache = get_cache()
+        status_data = await service_status()
+    except Exception as e:
+        logger.error(f"Unexpected error in service_info: {str(e)}", exc_info=True)
+        # Return a simple error page instead of crashing
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head><title>Service Error</title></head>
+        <body>
+            <h1>Service Temporarily Unavailable</h1>
+            <p>Unable to retrieve service information. Please try again later.</p>
+        </body>
+        </html>
+        """
     
     html_content = f"""
     <!DOCTYPE html>

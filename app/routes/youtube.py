@@ -1,9 +1,12 @@
+import logging
 from typing import List, Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, HTTPException
 
 from app.utils.youtube_tools import YouTubeTools
 from app.utils.transcript_cache import get_cache
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/youtube",
@@ -27,8 +30,17 @@ async def get_video_metadata(
     ),
 ):
     """Return basic video information such as *title*, *author* and *thumbnail*."""
-
-    return YouTubeTools.get_video_data(video)
+    try:
+        return YouTubeTools.get_video_data(video)
+    except HTTPException:
+        # Re-raise HTTPExceptions as-is (they're already properly formatted)
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in get_video_metadata: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve video metadata: {str(e)}"
+        )
 
 @router.get(
     "/captions",
@@ -40,8 +52,17 @@ async def get_video_captions(
     languages: Optional[List[str]] = Query(None, description="Preferred caption languages (ISO 639-1 codes). Default: ['en']"),
 ):
     """Return plain-text captions for the requested video (English by default)."""
-
-    return YouTubeTools.get_video_captions(video, languages)
+    try:
+        return YouTubeTools.get_video_captions(video, languages)
+    except HTTPException:
+        # Re-raise HTTPExceptions as-is (they're already properly formatted)
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in get_video_captions: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve video captions: {str(e)}"
+        )
 
 @router.get(
     "/timestamps",
@@ -53,8 +74,17 @@ async def get_video_timestamps(
     languages: Optional[List[str]] = Query(None, description="Preferred caption languages (ISO 639-1 codes). Default: ['en']"),
 ):
     """Return caption text with starting timestamps (English by default)."""
-
-    return YouTubeTools.get_video_timestamps(video, languages)
+    try:
+        return YouTubeTools.get_video_timestamps(video, languages)
+    except HTTPException:
+        # Re-raise HTTPExceptions as-is (they're already properly formatted)
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in get_video_timestamps: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve video timestamps: {str(e)}"
+        )
 
 @router.get(
     "/cache/stats",
@@ -63,13 +93,20 @@ async def get_video_timestamps(
 )
 async def get_cache_stats():
     """Return cache statistics and configuration."""
-    cache = get_cache()
-    return {
-        "enabled": cache.enabled,
-        "size": cache.size(),
-        "max_size": cache.max_size,
-        "ttl_seconds": cache.ttl_seconds,
-    }
+    try:
+        cache = get_cache()
+        return {
+            "enabled": cache.enabled,
+            "size": cache.size(),
+            "max_size": cache.max_size,
+            "ttl_seconds": cache.ttl_seconds,
+        }
+    except Exception as e:
+        logger.error(f"Unexpected error in get_cache_stats: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve cache statistics: {str(e)}"
+        )
 
 @router.delete(
     "/cache/clear",
@@ -78,9 +115,16 @@ async def get_cache_stats():
 )
 async def clear_cache():
     """Clear all cached transcripts."""
-    cache = get_cache()
-    cache.clear()
-    return {"message": "Cache cleared successfully", "size": cache.size()}
+    try:
+        cache = get_cache()
+        cache.clear()
+        return {"message": "Cache cleared successfully", "size": cache.size()}
+    except Exception as e:
+        logger.error(f"Unexpected error in clear_cache: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to clear cache: {str(e)}"
+        )
 
 @router.get(
     "/performance/test",
@@ -101,60 +145,68 @@ async def test_performance(
     Returns:
         Performance metrics including response times and speedup factor
     """
-    import time
-    
-    video_id = YouTubeTools.get_youtube_video_id(video)
-    if not video_id:
-        from fastapi import HTTPException
-        raise HTTPException(status_code=400, detail="Invalid YouTube URL/ID")
-    
-    normalized_languages = languages or ["en"]
-    times = []
-    errors = []
-    
-    for i in range(runs):
-        start_time = time.perf_counter()
-        try:
-            # Fetch transcript (will use cache after first request)
-            transcript = YouTubeTools._fetch_transcript(video_id, normalized_languages)
-            elapsed = time.perf_counter() - start_time
-            times.append(elapsed)
-        except Exception as e:
-            elapsed = time.perf_counter() - start_time
-            errors.append(str(e))
-            times.append(None)
-    
-    if not times or all(t is None for t in times):
-        from fastapi import HTTPException
+    try:
+        import time
+        
+        video_id = YouTubeTools.get_youtube_video_id(video)
+        if not video_id:
+            raise HTTPException(status_code=400, detail="Invalid YouTube URL/ID")
+        
+        normalized_languages = languages or ["en"]
+        times = []
+        errors = []
+        
+        for i in range(runs):
+            start_time = time.perf_counter()
+            try:
+                # Fetch transcript (will use cache after first request)
+                transcript = YouTubeTools._fetch_transcript(video_id, normalized_languages)
+                elapsed = time.perf_counter() - start_time
+                times.append(elapsed)
+            except Exception as e:
+                elapsed = time.perf_counter() - start_time
+                errors.append(str(e))
+                times.append(None)
+        
+        if not times or all(t is None for t in times):
+            raise HTTPException(
+                status_code=500,
+                detail=f"All requests failed. Errors: {', '.join(errors) if errors else 'Unknown error'}"
+            )
+        
+        # Filter out None values for calculations
+        valid_times = [t for t in times if t is not None]
+        
+        cache_miss_time = valid_times[0] if valid_times else None
+        cache_hit_times = valid_times[1:] if len(valid_times) > 1 else []
+        
+        result = {
+            "video_id": video_id,
+            "runs": runs,
+            "successful_runs": len(valid_times),
+            "cache_miss": {
+                "time_seconds": cache_miss_time,
+                "time_ms": cache_miss_time * 1000 if cache_miss_time else None,
+            } if cache_miss_time else None,
+            "cache_hits": {
+                "count": len(cache_hit_times),
+                "times_seconds": cache_hit_times,
+                "times_ms": [t * 1000 for t in cache_hit_times],
+                "avg_seconds": sum(cache_hit_times) / len(cache_hit_times) if cache_hit_times else None,
+                "avg_ms": (sum(cache_hit_times) / len(cache_hit_times) * 1000) if cache_hit_times else None,
+                "min_seconds": min(cache_hit_times) if cache_hit_times else None,
+                "max_seconds": max(cache_hit_times) if cache_hit_times else None,
+            } if cache_hit_times else None,
+            "speedup": cache_miss_time / (sum(cache_hit_times) / len(cache_hit_times)) if cache_miss_time and cache_hit_times else None,
+        }
+        
+        return result
+    except HTTPException:
+        # Re-raise HTTPExceptions as-is (they're already properly formatted)
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in test_performance: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"All requests failed. Errors: {', '.join(errors) if errors else 'Unknown error'}"
+            detail=f"Failed to run performance test: {str(e)}"
         )
-    
-    # Filter out None values for calculations
-    valid_times = [t for t in times if t is not None]
-    
-    cache_miss_time = valid_times[0] if valid_times else None
-    cache_hit_times = valid_times[1:] if len(valid_times) > 1 else []
-    
-    result = {
-        "video_id": video_id,
-        "runs": runs,
-        "successful_runs": len(valid_times),
-        "cache_miss": {
-            "time_seconds": cache_miss_time,
-            "time_ms": cache_miss_time * 1000 if cache_miss_time else None,
-        } if cache_miss_time else None,
-        "cache_hits": {
-            "count": len(cache_hit_times),
-            "times_seconds": cache_hit_times,
-            "times_ms": [t * 1000 for t in cache_hit_times],
-            "avg_seconds": sum(cache_hit_times) / len(cache_hit_times) if cache_hit_times else None,
-            "avg_ms": (sum(cache_hit_times) / len(cache_hit_times) * 1000) if cache_hit_times else None,
-            "min_seconds": min(cache_hit_times) if cache_hit_times else None,
-            "max_seconds": max(cache_hit_times) if cache_hit_times else None,
-        } if cache_hit_times else None,
-        "speedup": cache_miss_time / (sum(cache_hit_times) / len(cache_hit_times)) if cache_miss_time and cache_hit_times else None,
-    }
-    
-    return result
