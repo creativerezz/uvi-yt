@@ -81,3 +81,80 @@ async def clear_cache():
     cache = get_cache()
     cache.clear()
     return {"message": "Cache cleared successfully", "size": cache.size()}
+
+@router.get(
+    "/performance/test",
+    summary="Test transcript performance",
+    response_description="Performance metrics for transcript fetching (cache miss vs cache hit).",
+)
+async def test_performance(
+    video: str = Query(..., description="YouTube video URL or ID"),
+    runs: int = Query(3, ge=2, le=10, description="Number of test runs (default: 3)"),
+    languages: Optional[List[str]] = Query(None, description="Preferred caption languages. Default: ['en']"),
+):
+    """
+    Test transcript fetching performance.
+    
+    Makes multiple requests to measure cache miss (first request) vs cache hit (subsequent requests) performance.
+    Useful for benchmarking cache effectiveness.
+    
+    Returns:
+        Performance metrics including response times and speedup factor
+    """
+    import time
+    
+    video_id = YouTubeTools.get_youtube_video_id(video)
+    if not video_id:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="Invalid YouTube URL/ID")
+    
+    normalized_languages = languages or ["en"]
+    times = []
+    errors = []
+    
+    for i in range(runs):
+        start_time = time.perf_counter()
+        try:
+            # Fetch transcript (will use cache after first request)
+            transcript = YouTubeTools._fetch_transcript(video_id, normalized_languages)
+            elapsed = time.perf_counter() - start_time
+            times.append(elapsed)
+        except Exception as e:
+            elapsed = time.perf_counter() - start_time
+            errors.append(str(e))
+            times.append(None)
+    
+    if not times or all(t is None for t in times):
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=500,
+            detail=f"All requests failed. Errors: {', '.join(errors) if errors else 'Unknown error'}"
+        )
+    
+    # Filter out None values for calculations
+    valid_times = [t for t in times if t is not None]
+    
+    cache_miss_time = valid_times[0] if valid_times else None
+    cache_hit_times = valid_times[1:] if len(valid_times) > 1 else []
+    
+    result = {
+        "video_id": video_id,
+        "runs": runs,
+        "successful_runs": len(valid_times),
+        "cache_miss": {
+            "time_seconds": cache_miss_time,
+            "time_ms": cache_miss_time * 1000 if cache_miss_time else None,
+        } if cache_miss_time else None,
+        "cache_hits": {
+            "count": len(cache_hit_times),
+            "times_seconds": cache_hit_times,
+            "times_ms": [t * 1000 for t in cache_hit_times],
+            "avg_seconds": sum(cache_hit_times) / len(cache_hit_times) if cache_hit_times else None,
+            "avg_ms": (sum(cache_hit_times) / len(cache_hit_times) * 1000) if cache_hit_times else None,
+            "min_seconds": min(cache_hit_times) if cache_hit_times else None,
+            "max_seconds": max(cache_hit_times) if cache_hit_times else None,
+        } if cache_hit_times else None,
+        "speedup": cache_miss_time / (sum(cache_hit_times) / len(cache_hit_times)) if cache_miss_time and cache_hit_times else None,
+    }
+    
+    return result

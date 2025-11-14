@@ -218,6 +218,35 @@ youtube-api-server/
 
 Visit `/service/info` for a beautiful HTML service information page, or `/service/status` for JSON status data.
 
+## Frontend Integration
+
+**For frontend developers**: See [FRONTEND_API.md](FRONTEND_API.md) for complete API documentation with:
+- JavaScript/TypeScript code examples
+- React and Vue.js hooks
+- Error handling patterns
+- TypeScript type definitions
+- Best practices and testing
+
+## Performance Testing
+
+Test transcript fetching performance and cache effectiveness:
+
+```bash
+# Test local server
+python test_transcript_speed.py
+
+# Test production server
+python test_transcript_speed.py https://fetch.youtubesummaries.cc
+
+# Test specific videos with custom runs
+python test_transcript_speed.py http://localhost:8000 dQw4w9WgXcQ,jNQXAC9IVRw 5
+```
+
+Or use the API endpoint:
+```bash
+curl "https://fetch.youtubesummaries.cc/youtube/performance/test?video=dQw4w9WgXcQ&runs=5"
+```
+
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for a detailed list of changes and version history.

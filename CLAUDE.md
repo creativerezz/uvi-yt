@@ -79,16 +79,16 @@ curl "http://localhost:8000/youtube/captions?video=https://www.youtube.com/watch
 ### Production (Railway Deployment)
 ```bash
 # Health check
-curl "https://uvi-yt-production.up.railway.app/health"
+curl "https://fetch.youtubesummaries.cc/health"
 
 # Video metadata
-curl "https://uvi-yt-production.up.railway.app/youtube/metadata?video=dQw4w9WgXcQ"
+curl "https://fetch.youtubesummaries.cc/youtube/metadata?video=dQw4w9WgXcQ"
 
 # Captions with language preference
-curl "https://uvi-yt-production.up.railway.app/youtube/captions?video=dQw4w9WgXcQ&languages=en"
+curl "https://fetch.youtubesummaries.cc/youtube/captions?video=dQw4w9WgXcQ&languages=en"
 
 # Test with problematic video (proxy bypass)
-curl "https://uvi-yt-production.up.railway.app/youtube/captions?video=4v4PJoxm8Bc"
+curl "https://fetch.youtubesummaries.cc/youtube/captions?video=4v4PJoxm8Bc"
 ```
 
 ### Expected Response Formats
@@ -253,9 +253,9 @@ The `extract_video_id` method handles multiple YouTube URL formats:
 ### Testing Proxy Configuration
 ```bash
 # Test without proxy (should fail for some videos)
-curl "https://uvi-yt-production.up.railway.app/youtube/captions?video=4v4PJoxm8Bc"
+curl "https://fetch.youtubesummaries.cc/youtube/captions?video=4v4PJoxm8Bc"
 
 # Test after adding proxy config (should succeed)
 # Add PROXY_TYPE=generic and PROXY_URL in Railway dashboard, then redeploy
-curl "https://uvi-yt-production.up.railway.app/youtube/captions?video=4v4PJoxm8Bc"
+curl "https://fetch.youtubesummaries.cc/youtube/captions?video=4v4PJoxm8Bc"
 ```
