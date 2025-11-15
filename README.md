@@ -26,7 +26,7 @@ A FastAPI-based server providing API endpoints for extracting and processing You
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/chinpeerapat/youtube-api-server.git
+   git clone https://github.com/creativerezz/youtube-api-server.git
    cd youtube-api-server
    ```
 
@@ -68,7 +68,7 @@ A FastAPI-based server providing API endpoints for extracting and processing You
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/chinpeerapat/youtube-api-server.git
+   git clone https://github.com/creativerezz/youtube-api-server.git
    cd youtube-api-server
    ```
 
@@ -254,6 +254,13 @@ See [CHANGELOG.md](CHANGELOG.md) for a detailed list of changes and version hist
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Author
+
+**Reza Jafar**
+
+- GitHub: [@creativerezz](https://github.com/creativerezz)
+- X (Twitter): [@creativerezz](https://x.com/creativerezz)
 
 ## License
 

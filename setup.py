@@ -9,12 +9,12 @@ with open("requirements.txt", "r", encoding="utf-8") as f:
 setup(
     name="youtube-api-server",
     version="1.0.0",
-    author="chinpeerapat",
+    author="Reza Jafar",
     author_email="your.email@example.com",
     description="API server for YouTube video data extraction",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/chinpeerapat/youtube-api-server",
+    url="https://github.com/creativerezz/youtube-api-server",
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",

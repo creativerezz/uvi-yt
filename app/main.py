@@ -30,8 +30,9 @@ app = FastAPI(
     description="Easily fetch YouTube metadata, captions and timestamps. Paste **any** video URL or 11-character ID – no extra JSON required!",
     version="1.0.0",
     contact={
-        "name": "YouTube Tools API",
+        "name": "Reza J.",
         "url": "https://github.com/creativerezz",
+        "x-twitter": "https://x.com/creativerezz",
     },
     license_info={
         "name": "MIT",
