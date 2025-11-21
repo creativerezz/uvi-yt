@@ -31,7 +31,7 @@ async def get_video_metadata(
 ):
     """Return basic video information such as *title*, *author* and *thumbnail*."""
     try:
-        return YouTubeTools.get_video_data(video)
+        return await YouTubeTools.get_video_data(video)
     except HTTPException:
         # Re-raise HTTPExceptions as-is (they're already properly formatted)
         raise
@@ -53,7 +53,7 @@ async def get_video_captions(
 ):
     """Return plain-text captions for the requested video (English by default)."""
     try:
-        return YouTubeTools.get_video_captions(video, languages)
+        return await YouTubeTools.get_video_captions(video, languages)
     except HTTPException:
         # Re-raise HTTPExceptions as-is (they're already properly formatted)
         raise
@@ -75,7 +75,7 @@ async def get_video_timestamps(
 ):
     """Return caption text with starting timestamps (English by default)."""
     try:
-        return YouTubeTools.get_video_timestamps(video, languages)
+        return await YouTubeTools.get_video_timestamps(video, languages)
     except HTTPException:
         # Re-raise HTTPExceptions as-is (they're already properly formatted)
         raise
@@ -160,7 +160,7 @@ async def test_performance(
             start_time = time.perf_counter()
             try:
                 # Fetch transcript (will use cache after first request)
-                transcript = YouTubeTools._fetch_transcript(video_id, normalized_languages)
+                transcript = await YouTubeTools._fetch_transcript(video_id, normalized_languages)
                 elapsed = time.perf_counter() - start_time
                 times.append(elapsed)
             except Exception as e:

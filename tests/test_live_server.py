@@ -8,7 +8,8 @@ import json
 import sys
 from typing import Dict, Any
 
-BASE_URL = "https://fetch.youtubesummaries.cc"
+# Default to production, but allow override via command line
+BASE_URL = sys.argv[1] if len(sys.argv) > 1 else "https://fetch.youtubesummaries.cc"
 
 def test_endpoint(endpoint: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
     """Test an endpoint and return the result."""
